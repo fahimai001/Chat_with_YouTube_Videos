@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YouTube Transcript & QA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .response-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        #transcript {
+            height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        #answer {
+            min-height: 100px;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .section-title {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+            margin: 25px 0 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Video Analyzer</h1>
+        
+        <!-- Input Section -->
+        <div class="form-group">
+            <label for="url">YouTube URL:</label>
+            <input type="url" id="url" required placeholder="https://www.youtube.com/watch?v=...">
+        </div>
+        <div class="form-group">
+            <label for="language">Language:</label>
+            <select id="language">
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="de">Hindi</option>
+            </select>
+        </div>
+        
+        <!-- Action Buttons -->
+        <button onclick="getTranscript()">Get Transcript</button>
+        <button onclick="askQuestion()">Ask Question</button>
+        <div class="loader" id="loader"></div>
+
+        <!-- Transcript Section -->
+        <h3 class="section-title">Transcript</h3>
+        <div class="response-box" id="transcript"></div>
+
+        <!-- Q&A Section -->
+        <h3 class="section-title">Ask Question</h3>
+        <div class="form-group">
+            <textarea id="question" rows="3" placeholder="Enter your question here..."></textarea>
+        </div>
+        <div class="response-box" id="answer"></div>
+    </div>
+
+    <script>
+        async function handleApiCall(endpoint, data) {
+            const loader = document.getElementById('loader');
+            try {
+                loader.style.display = 'block';
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Unknown error occurred');
+                }
+
+                return await response.json();
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        async function getTranscript() {
+            const url = document.getElementById('url').value;
+            const language = document.getElementById('language').value;
+            
+            if (!url) {
+                alert('Please enter a YouTube URL');
+                return;
+            }
+
+            try {
+                const data = await handleApiCall('/transcript', {url, language});
+                document.getElementById('transcript').textContent = data.transcript;
+                document.getElementById('answer').innerHTML = ''; // Clear previous answer
+            } catch (error) {
+                document.getElementById('transcript').innerHTML = 
+                    `<strong>Error:</strong> ${error.message}`;
+            }
+        }
+
+        async function askQuestion() {
+            const url = document.getElementById('url').value;
+            const question = document.getElementById('question').value;
+            const language = document.getElementById('language').value;
+            
+            if (!url || !question) {
+                alert('Please enter both URL and question');
+                return;
+            }
+
+            try {
+                const data = await handleApiCall('/ask', {url, question, language});
+                document.getElementById('answer').innerHTML = 
+                    `<strong>Question:</strong> ${question}<br><br>
+                     <strong>Answer:</strong> ${data.answer}`;
+            } catch (error) {
+                document.getElementById('answer').innerHTML = 
+                    `<strong>Error:</strong> ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
