@@ -17,7 +17,6 @@ if not API_KEY:
 
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=API_KEY)
 
-
 def extract_transcript(url: str, lang: str = "en") -> str:
     """Extract and return transcript text from a YouTube video URL."""
     video_id_match = re.search(r"(?:v=|youtu\.be/)([a-zA-Z0-9_-]{11})", url)
@@ -27,15 +26,25 @@ def extract_transcript(url: str, lang: str = "en") -> str:
     video_id = video_id_match.group(1)
     try:
         transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[lang])
-    except Exception:
+    except Exception as e:
         try:
             transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-            transcript = next(iter(transcript_list)).fetch()
+            first_transcript = next(iter(transcript_list))
+            if first_transcript.language_code != lang:
+                msg = f"Transcript not available in {lang}. Using {first_transcript.language_code}."
+                print(msg)
+            transcript = first_transcript.fetch()
         except Exception as e:
             return f"Error: Could not retrieve transcript. {str(e)}"
     
-    return ' '.join(entry['text'] for entry in transcript)
 
+    texts = []
+    for entry in transcript:
+        try:
+            texts.append(entry['text'])  
+        except TypeError:
+            texts.append(entry.text)    
+    return ' '.join(texts)
 
 def build_qa_chain(transcript: str):
     """Build a retrieval-based QA chain using transcript."""
@@ -47,15 +56,18 @@ def build_qa_chain(transcript: str):
     retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
     template = """
-    You are an AI assistant that answers questions about YouTube videos based on their transcript.
+    You are a multilingual AI assistant that answers questions about YouTube videos. 
+    Always respond in the same language as the question. 
+    If the transcript language differs from the question language, translate the answer while preserving meaning.
 
     Context from video transcript:
     {context}
 
     Question: {question}
 
-    Provide a concise and accurate answer based only on the information in the transcript.
-    If the transcript doesn't contain information to answer the question, say so politely.
+    Provide a concise answer based only on the transcript. If no relevant information exists, say:
+    "The transcript doesn't contain relevant information for this question." 
+    Maintain the question's language in your response.
     """
     prompt = ChatPromptTemplate.from_template(template)
 
@@ -65,7 +77,6 @@ def build_qa_chain(transcript: str):
         | llm
         | StrOutputParser()
     )
-
 
 def ask_question(chain, question: str) -> str:
     """Ask a question using the given retrieval chain."""

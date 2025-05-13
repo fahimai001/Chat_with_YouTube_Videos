@@ -3,16 +3,16 @@ from pydantic import BaseModel, HttpUrl
 import uvicorn
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from typing import Tuple
 
 from src.helper_func import extract_transcript, build_qa_chain, ask_question
 
 app = FastAPI(
     title="YouTube Transcript QA System",
-    description="Web interface for YouTube transcript extraction and Q&A",
-    version="1.0.0"
+    description="Multilingual web interface for YouTube transcript Q&A",
+    version="2.0.0"
 )
 
-# Setup templates and static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -41,18 +41,20 @@ async def get_transcript(request: TranscriptRequest):
 
 @app.post("/ask")
 async def ask_video_question(request: QuestionRequest):
-    """Q&A endpoint"""
+    """Multilingual Q&A endpoint"""
     url_str = str(request.url)
+    lang = request.language
+    cache_key = (url_str, lang)
     
     # Get or create QA chain
-    if url_str not in qa_chains:
-        transcript = extract_transcript(url_str, request.language)
+    if cache_key not in qa_chains:
+        transcript = extract_transcript(url_str, lang)
         if transcript.startswith("Error:"):
             raise HTTPException(status_code=400, detail=transcript)
-        qa_chains[url_str] = build_qa_chain(transcript)
+        qa_chains[cache_key] = build_qa_chain(transcript)
     
     # Get answer
-    answer = ask_question(qa_chains[url_str], request.question)
+    answer = ask_question(qa_chains[cache_key], request.question)
     if answer.startswith("Error:"):
         raise HTTPException(status_code=500, detail=answer)
     
