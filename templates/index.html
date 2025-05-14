@@ -1,126 +1,588 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>YouTube Transcript & QA</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Analyzer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f0f0f0;
+        :root {
+            --primary-color: #ff0000;
+            --primary-dark: #cc0000;
+            --secondary-color: #2c3e50;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+            --gray-light: #e9ecef;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
         }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        
+        * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        button {
-            background-color: #4CAF50;
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: var(--light-bg);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: var(--dark-bg);
             color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        
+        .logo i {
+            color: var(--primary-color);
+            font-size: 2rem;
             margin-right: 10px;
         }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        main {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        .input-group {
+            display: flex;
+            position: relative;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255,0,0,0.1);
+        }
+        
+        .url-input {
+            padding-right: 40px;
+        }
+        
+        .paste-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        .paste-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
         button:hover {
-            background-color: #45a049;
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
         }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .section {
+            margin: 30px 0;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--gray-light);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            color: var(--secondary-color);
+            margin: 0;
+        }
+        
         .response-box {
-            margin-top: 20px;
+            background-color: var(--light-bg);
+            border-radius: var(--border-radius);
             padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
+            position: relative;
+            min-height: 100px;
         }
+        
+        #transcript, #answer {
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+        }
+        
         #transcript {
             height: 300px;
             overflow-y: auto;
-            white-space: pre-wrap;
         }
-        #answer {
-            min-height: 100px;
+        
+        .transcript-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
         }
+        
+        .copy-btn {
+            background-color: var(--secondary-color);
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .copy-btn:hover {
+            background-color: #1a252f;
+        }
+        
+        .qa-section {
+            background-color: #f0f4f8;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .qa-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        
+        .qa-row textarea {
+            flex-grow: 1;
+            height: 100px;
+        }
+        
+        .qa-row button {
+            margin-top: 10px;
+        }
+        
+        .answer-container {
+            margin-top: 20px;
+            position: relative;
+        }
+        
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border: 4px solid rgba(255, 0, 0, 0.1);
+            border-left: 4px solid var(--primary-color);
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none;
+            margin-bottom: 15px;
         }
+        
+        .loader-text {
+            color: var(--secondary-color);
+            text-align: center;
+        }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .section-title {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 5px;
-            margin: 25px 0 15px;
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+        
+        .video-preview {
+            margin-top: 15px;
+            display: none;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .video-thumbnail {
+            width: 120px;
+            height: 68px;
+            background-color: #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .video-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .video-details {
+            flex: 1;
+        }
+        
+        .video-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .video-channel {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        .badge-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .message-box {
+            padding: 12px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            display: none;
+        }
+        
+        .message-box i {
+            font-size: 1.2rem;
+        }
+        
+        .message-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .message-info {
+            background-color: #cce5ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+        
+        .message-content {
+            flex: 1;
+        }
+        
+        .close-message {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            padding: 0;
+            font-size: 1.2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .qa-row {
+                flex-direction: column;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .video-preview {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .video-thumbnail {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 16/9;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>YouTube Video Analyzer</h1>
+        <header>
+            <div class="logo">
+                <i class="fab fa-youtube"></i>
+                <h1>YouTube Video Analyzer</h1>
+            </div>
+            <p class="subtitle">Get transcripts and ask questions about YouTube videos</p>
+        </header>
         
-        <!-- Input Section -->
-        <div class="form-group">
-            <label for="url">YouTube URL:</label>
-            <input type="url" id="url" required placeholder="https://www.youtube.com/watch?v=...">
-        </div>
-        <div class="form-group">
-            <label for="language">Language:</label>
-            <select id="language">
-                <option value="en">English</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-                <option value="de">German</option>
-                <option value="de">Hindi</option>
-            </select>
-        </div>
-        
-        <!-- Action Buttons -->
-        <button onclick="getTranscript()">Get Transcript</button>
-        <button onclick="askQuestion()">Ask Question</button>
-        <div class="loader" id="loader"></div>
-
-        <!-- Transcript Section -->
-        <h3 class="section-title">Transcript</h3>
-        <div class="response-box" id="transcript"></div>
-
-        <!-- Q&A Section -->
-        <h3 class="section-title">Ask Question</h3>
-        <div class="form-group">
-            <textarea id="question" rows="3" placeholder="Enter your question here..."></textarea>
-        </div>
-        <div class="response-box" id="answer"></div>
+        <main>
+            <div id="message-container"></div>
+            
+            <!-- Input Section -->
+            <div class="form-group">
+                <label for="url">YouTube Video URL</label>
+                <div class="input-group">
+                    <input type="url" id="url" class="url-input" placeholder="https://www.youtube.com/watch?v=..." required>
+                    <button class="paste-btn" id="pasteButton" title="Paste from clipboard">
+                        <i class="fas fa-paste"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="videoPreview" class="video-preview" style="display: none;">
+                <div class="video-thumbnail">
+                    <img id="thumbnailImg" src="/api/placeholder/120/68" alt="Video thumbnail">
+                </div>
+                <div class="video-details">
+                    <div id="videoTitle" class="video-title">Video title will appear here</div>
+                    <div id="channelName" class="video-channel">Channel name</div>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button id="getTranscriptBtn" onclick="getTranscript()">
+                    <i class="fas fa-closed-captioning"></i> Get Transcript
+                </button>
+                <button id="clearBtn" class="copy-btn" onclick="clearAll()">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+            </div>
+            
+            <!-- Transcript Section -->
+            <div class="section" id="transcriptSection">
+                <div class="section-header">
+                    <i class="fas fa-file-alt"></i>
+                    <h2 class="section-title">Transcript</h2>
+                </div>
+                
+                <div class="response-box" id="transcriptContainer">
+                    <div class="empty-state" id="transcriptEmptyState">
+                        <i class="fas fa-closed-captioning"></i>
+                        <p>Enter a YouTube URL and click "Get Transcript" to see the video transcript here</p>
+                    </div>
+                    <div id="transcriptLoader" class="loader-container" style="display: none;">
+                        <div class="loader"></div>
+                        <p class="loader-text">Fetching transcript...</p>
+                    </div>
+                    <div id="transcript" style="display: none;"></div>
+                </div>
+                
+                <div class="transcript-actions" id="transcriptActions" style="display: none;">
+                    <button class="copy-btn" onclick="copyToClipboard('transcript')">
+                        <i class="fas fa-copy"></i> Copy Transcript
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Q&A Section -->
+            <div class="qa-section" id="qaSection">
+                <div class="section-header">
+                    <i class="fas fa-question-circle"></i>
+                    <h2 class="section-title">Ask a Question About the Video</h2>
+                </div>
+                
+                <div class="form-group qa-row">
+                    <textarea id="question" placeholder="What would you like to know about this video?" rows="3"></textarea>
+                </div>
+                
+                <button id="askQuestionBtn" onclick="askQuestion()">
+                    <i class="fas fa-search"></i> Ask Question
+                </button>
+                
+                <div class="answer-container">
+                    <div class="section-header">
+                        <i class="fas fa-comment-alt"></i>
+                        <h3 class="section-title">Answer</h3>
+                    </div>
+                    
+                    <div class="response-box">
+                        <div class="empty-state" id="answerEmptyState">
+                            <i class="fas fa-comments"></i>
+                            <p>Ask a question about the video to see the answer here</p>
+                        </div>
+                        <div id="answerLoader" class="loader-container" style="display: none;">
+                            <div class="loader"></div>
+                            <p class="loader-text">Analyzing video content...</p>
+                        </div>
+                        <div id="answer" style="display: none;"></div>
+                    </div>
+                    
+                    <div class="transcript-actions" id="answerActions" style="display: none;">
+                        <button class="copy-btn" onclick="copyToClipboard('answer')">
+                            <i class="fas fa-copy"></i> Copy Answer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
+        // Utility functions
+        function showMessage(type, message, duration = 5000) {
+            const container = document.getElementById('message-container');
+            const id = 'msg-' + Date.now();
+            const html = `
+                <div id="${id}" class="message-box message-${type}">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                    <div class="message-content">${message}</div>
+                    <button class="close-message" onclick="closeMessage('${id}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            
+            const messageElement = document.getElementById(id);
+            messageElement.style.display = 'flex';
+            
+            if (duration) {
+                setTimeout(() => {
+                    closeMessage(id);
+                }, duration);
+            }
+        }
+        
+        function closeMessage(id) {
+            const message = document.getElementById(id);
+            if (message) {
+                message.style.opacity = '0';
+                setTimeout(() => {
+                    message.remove();
+                }, 300);
+            }
+        }
+        
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('success', 'Copied to clipboard!', 2000);
+            }).catch(err => {
+                showMessage('error', 'Failed to copy: ' + err);
+            });
+        }
+        
+        function extractVideoId(url) {
+            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[7].length === 11) ? match[7] : false;
+        }
+        
+        function updateVideoPreview(videoId) {
+            if (!videoId) return;
+            
+            const thumbnail = document.getElementById('thumbnailImg');
+            thumbnail.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+            
+            // In a real application, you would fetch video metadata
+            // For now, we'll just show the preview with the thumbnail
+            document.getElementById('videoTitle').textContent = "Video Title (API would fetch this)";
+            document.getElementById('channelName').textContent = "Channel Name";
+            document.getElementById('videoPreview').style.display = 'flex';
+        }
+        
         async function handleApiCall(endpoint, data) {
-            const loader = document.getElementById('loader');
             try {
-                loader.style.display = 'block';
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -133,50 +595,143 @@
                 }
 
                 return await response.json();
-            } finally {
-                loader.style.display = 'none';
+            } catch (error) {
+                throw error;
             }
         }
-
+        
+        // Main functionality
         async function getTranscript() {
-            const url = document.getElementById('url').value;
-            const language = document.getElementById('language').value;
+            const url = document.getElementById('url').value.trim();
             
             if (!url) {
-                alert('Please enter a YouTube URL');
+                showMessage('error', 'Please enter a YouTube URL');
                 return;
             }
-
-            try {
-                const data = await handleApiCall('/transcript', {url, language});
-                document.getElementById('transcript').textContent = data.transcript;
-                document.getElementById('answer').innerHTML = ''; // Clear previous answer
-            } catch (error) {
-                document.getElementById('transcript').innerHTML = 
-                    `<strong>Error:</strong> ${error.message}`;
-            }
-        }
-
-        async function askQuestion() {
-            const url = document.getElementById('url').value;
-            const question = document.getElementById('question').value;
-            const language = document.getElementById('language').value;
             
-            if (!url || !question) {
-                alert('Please enter both URL and question');
+            const videoId = extractVideoId(url);
+            if (!videoId) {
+                showMessage('error', 'Invalid YouTube URL. Please enter a valid YouTube video URL.');
                 return;
             }
-
+            
+            // Update UI before fetching
+            document.getElementById('transcriptEmptyState').style.display = 'none';
+            document.getElementById('transcript').style.display = 'none';
+            document.getElementById('transcriptLoader').style.display = 'flex';
+            document.getElementById('transcriptActions').style.display = 'none';
+            
+            updateVideoPreview(videoId);
+            
             try {
-                const data = await handleApiCall('/ask', {url, question, language});
-                document.getElementById('answer').innerHTML = 
-                    `<strong>Question:</strong> ${question}<br><br>
-                     <strong>Answer:</strong> ${data.answer}`;
+                const data = await handleApiCall('/transcript', {url});
+                
+                // Update UI after success
+                document.getElementById('transcriptLoader').style.display = 'none';
+                document.getElementById('transcript').textContent = data.transcript;
+                document.getElementById('transcript').style.display = 'block';
+                document.getElementById('transcriptActions').style.display = 'flex';
+                
+                // Reset answer section
+                document.getElementById('answer').style.display = 'none';
+                document.getElementById('answerEmptyState').style.display = 'block';
+                document.getElementById('answerActions').style.display = 'none';
+                
+                showMessage('success', 'Transcript fetched successfully!');
             } catch (error) {
-                document.getElementById('answer').innerHTML = 
-                    `<strong>Error:</strong> ${error.message}`;
+                document.getElementById('transcriptLoader').style.display = 'none';
+                document.getElementById('transcriptEmptyState').style.display = 'block';
+                showMessage('error', `Error: ${error.message}`);
             }
         }
+        
+        async function askQuestion() {
+            const url = document.getElementById('url').value.trim();
+            const question = document.getElementById('question').value.trim();
+            
+            if (!url) {
+                showMessage('error', 'Please enter a YouTube URL');
+                return;
+            }
+            
+            if (!question) {
+                showMessage('error', 'Please enter a question');
+                return;
+            }
+            
+            // Update UI before fetching
+            document.getElementById('answerEmptyState').style.display = 'none';
+            document.getElementById('answer').style.display = 'none';
+            document.getElementById('answerLoader').style.display = 'flex';
+            document.getElementById('answerActions').style.display = 'none';
+            
+            try {
+                const data = await handleApiCall('/ask', {url, question});
+                
+                // Update UI after success
+                document.getElementById('answerLoader').style.display = 'none';
+                document.getElementById('answer').innerHTML = `
+                    <strong>Question:</strong> ${question}<br><br>
+                    <strong>Answer:</strong> ${data.answer}
+                `;
+                document.getElementById('answer').style.display = 'block';
+                document.getElementById('answerActions').style.display = 'flex';
+            } catch (error) {
+                document.getElementById('answerLoader').style.display = 'none';
+                document.getElementById('answerEmptyState').style.display = 'block';
+                showMessage('error', `Error: ${error.message}`);
+            }
+        }
+        
+        function clearAll() {
+            // Clear input fields
+            document.getElementById('url').value = '';
+            document.getElementById('question').value = '';
+            
+            // Reset transcript section
+            document.getElementById('transcript').textContent = '';
+            document.getElementById('transcript').style.display = 'none';
+            document.getElementById('transcriptEmptyState').style.display = 'block';
+            document.getElementById('transcriptActions').style.display = 'none';
+            
+            // Reset answer section
+            document.getElementById('answer').textContent = '';
+            document.getElementById('answer').style.display = 'none';
+            document.getElementById('answerEmptyState').style.display = 'block';
+            document.getElementById('answerActions').style.display = 'none';
+            
+            // Hide video preview
+            document.getElementById('videoPreview').style.display = 'none';
+            
+            showMessage('info', 'All content has been cleared', 2000);
+        }
+        
+        // Initialize paste button functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const pasteButton = document.getElementById('pasteButton');
+            const urlInput = document.getElementById('url');
+            
+            pasteButton.addEventListener('click', function() {
+                navigator.clipboard.readText().then(text => {
+                    urlInput.value = text;
+                    const videoId = extractVideoId(text);
+                    if (videoId) {
+                        updateVideoPreview(videoId);
+                    }
+                }).catch(err => {
+                    showMessage('error', 'Failed to read clipboard: ' + err);
+                });
+            });
+            
+            urlInput.addEventListener('input', function() {
+                const videoId = extractVideoId(this.value);
+                if (videoId) {
+                    updateVideoPreview(videoId);
+                } else {
+                    document.getElementById('videoPreview').style.display = 'none';
+                }
+            });
+        });
     </script>
 </body>
 </html>
