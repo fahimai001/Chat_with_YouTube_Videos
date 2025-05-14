@@ -46,14 +46,14 @@ async def ask_video_question(request: QuestionRequest):
     lang = request.language
     cache_key = (url_str, lang)
     
-    # Get or create QA chain
+    
     if cache_key not in qa_chains:
         transcript = extract_transcript(url_str, lang)
         if transcript.startswith("Error:"):
             raise HTTPException(status_code=400, detail=transcript)
         qa_chains[cache_key] = build_qa_chain(transcript)
     
-    # Get answer
+
     answer = ask_question(qa_chains[cache_key], request.question)
     if answer.startswith("Error:"):
         raise HTTPException(status_code=500, detail=answer)
