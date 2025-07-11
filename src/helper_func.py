@@ -56,19 +56,21 @@ def build_qa_chain(transcript: str):
     retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
     template = """
-    You are a multilingual AI assistant that answers questions about YouTube videos. 
-    Always respond in the same language as the question. 
-    If the transcript language differs from the question language, translate the answer while preserving meaning.
+    You are a helpful and concise multilingual assistant. 
+    Answer questions **only based on the context from the transcript**.
 
-    Context from video transcript:
+    If the context doesn't contain relevant info, say:
+    "The transcript doesn't contain relevant information for this question."
+
+    Context:
     {context}
 
-    Question: {question}
+    Question:
+    {question}
 
-    Provide a concise answer based only on the transcript. If no relevant information exists, say:
-    "The transcript doesn't contain relevant information for this question." 
-    Maintain the question's language in your response.
+    Answer in the same language as the question. Be precise and brief.
     """
+
     prompt = ChatPromptTemplate.from_template(template)
 
     return (
